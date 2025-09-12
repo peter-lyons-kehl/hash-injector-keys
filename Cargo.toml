@@ -1,0 +1,32 @@
+[package]
+name = "hash-injector-keys"
+version = "0.1.0"
+edition = "2024"
+
+license = "BSD-2-Clause OR Apache-2.0 OR MIT"
+rust-version = "1.85.0"
+
+authors = ["Peter Lyons Kehl<peter.kehl@gmail.com>"]
+description = "Hasher+BuildHasher to inject particular hash"
+
+categories = ["algorithms", "data-structures", "no-std", "rust-patterns"]
+
+keywords = ["cache", "lru", "hashmap", "data-structures"]
+
+repository = "https://github.com/peter-lyons-kehl/hash-injector"
+homepage = "https://github.com/peter-lyons-kehl/hash-injector"
+readme = "../README.md"
+
+[dependencies]
+
+hash-injector = { path = "../hash-injector/lib" }
+
+[lints.rust]
+unexpected_cfgs = { level = "forbid"}
+
+[features]
+
+# Whether to use a higher level type for the const generic parameter type InjectionFlags.
+#
+# Similar, but independent of same feature in hash-injector.
+adt-const-params = []
