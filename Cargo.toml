@@ -28,5 +28,6 @@ unexpected_cfgs = { level = "forbid"}
 
 # Whether to use a higher level type for the const generic parameter type InjectionFlags.
 #
-# Similar, but independent of same feature in hash-injector.
+# Similar, but independent of same feature in hash-injector. This does NOT trigger/depend on
+# adt-const-params feature in hash-injector.
 adt-const-params = []

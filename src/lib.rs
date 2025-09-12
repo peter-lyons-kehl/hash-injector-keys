@@ -9,7 +9,7 @@ use core::hash::{Hash, Hasher};
 use core::marker::ConstParamTy;
 use core::mem;
 use core::ops::{Deref, DerefMut};
-use hash_injector::InjectionFlags;
+use hash_injector::ProtocolFlags;
 
 // duality triality quaternity
 
@@ -62,7 +62,7 @@ const fn eq_includes_hash(flags: KeyFlags) -> bool {
 
 #[derive(Eq, Clone, Copy, Debug)]
 #[non_exhaustive]
-pub struct Primary<P, const IF: InjectionFlags, const KF: KeyFlags> {
+pub struct Primary<P, const PF: ProtocolFlags, const KF: KeyFlags> {
     /// `hash` is listed before `p`, so that it can short-circuit the derived [PartialEq]
     /// implementation by comparing `hash` first.
     ///
@@ -70,19 +70,19 @@ pub struct Primary<P, const IF: InjectionFlags, const KF: KeyFlags> {
     pub hash: u64,
     pub p: P,
 }
-impl<P, const IF: InjectionFlags, const KF: KeyFlags> Primary<P, IF, KF> {
+impl<P, const PF: ProtocolFlags, const KF: KeyFlags> Primary<P, PF, KF> {
     pub fn new(p: P, hash: u64) -> Self {
         Self { p, hash }
     }
 }
-impl<P: Hash, const IF: InjectionFlags, const KF: KeyFlags> Primary<P, IF, KF> {
+impl<P: Hash, const PF: ProtocolFlags, const KF: KeyFlags> Primary<P, PF, KF> {
     /// We consume the hasher, so that it's not reused accidentally.
     pub fn new_from_hasher<H: Hasher>(key: P, mut h: H) -> Self {
         key.hash(&mut h);
         Self::new(key, h.finish())
     }
 }
-impl<P: PartialEq, const IF: InjectionFlags, const KF: KeyFlags> PartialEq for Primary<P, IF, KF> {
+impl<P: PartialEq, const PF: ProtocolFlags, const KF: KeyFlags> PartialEq for Primary<P, PF, KF> {
     fn eq(&self, other: &Self) -> bool {
         if eq_includes_hash(KF) {
             self.hash == other.hash && self.p == other.p
@@ -98,19 +98,19 @@ impl<P: PartialEq, const IF: InjectionFlags, const KF: KeyFlags> PartialEq for P
         }
     }
 }
-impl<P: Hash, const IF: InjectionFlags, const KF: KeyFlags> Hash for Primary<P, IF, KF> {
+impl<P: Hash, const PF: ProtocolFlags, const KF: KeyFlags> Hash for Primary<P, PF, KF> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        hash_injector::signal_inject_hash::<H, IF>(state, self.hash);
+        hash_injector::signal_inject_hash::<H, PF>(state, self.hash);
     }
 }
-impl<P, const IF: InjectionFlags, const KF: KeyFlags> Deref for Primary<P, IF, KF> {
+impl<P, const PF: ProtocolFlags, const KF: KeyFlags> Deref for Primary<P, PF, KF> {
     type Target = P;
 
     fn deref(&self) -> &Self::Target {
         &self.p
     }
 }
-impl<P, const IF: InjectionFlags, const KF: KeyFlags> DerefMut for Primary<P, IF, KF> {
+impl<P, const PF: ProtocolFlags, const KF: KeyFlags> DerefMut for Primary<P, PF, KF> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.p
     }
@@ -118,18 +118,16 @@ impl<P, const IF: InjectionFlags, const KF: KeyFlags> DerefMut for Primary<P, IF
 
 #[derive(Clone, Copy, Debug, Eq)]
 #[non_exhaustive]
-pub struct Secondary<S, const IF: InjectionFlags, const KF: KeyFlags> {
+pub struct Secondary<S, const PF: ProtocolFlags, const KF: KeyFlags> {
     pub hash: u64,
     pub s: S,
 }
-impl<S, const IF: InjectionFlags, const KF: KeyFlags> Secondary<S, IF, KF> {
+impl<S, const PF: ProtocolFlags, const KF: KeyFlags> Secondary<S, PF, KF> {
     pub fn new(s: S, hash: u64) -> Self {
         Self { s, hash }
     }
 }
-impl<S: PartialEq, const IF: InjectionFlags, const KF: KeyFlags> PartialEq
-    for Secondary<S, IF, KF>
-{
+impl<S: PartialEq, const PF: ProtocolFlags, const KF: KeyFlags> PartialEq for Secondary<S, PF, KF> {
     fn eq(&self, other: &Self) -> bool {
         if eq_includes_hash(KF) {
             self.hash == other.hash && self.s == other.s
@@ -145,8 +143,8 @@ impl<S: PartialEq, const IF: InjectionFlags, const KF: KeyFlags> PartialEq
         }
     }
 }
-impl<S: PartialOrd, const IF: InjectionFlags, const KF: KeyFlags> PartialOrd
-    for Secondary<S, IF, KF>
+impl<S: PartialOrd, const PF: ProtocolFlags, const KF: KeyFlags> PartialOrd
+    for Secondary<S, PF, KF>
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.s.partial_cmp(&other.s)
@@ -164,24 +162,24 @@ impl<S: PartialOrd, const IF: InjectionFlags, const KF: KeyFlags> PartialOrd
         self.s.lt(&other.s)
     }
 }
-impl<S: Ord, const IF: InjectionFlags, const KF: KeyFlags> Ord for Secondary<S, IF, KF> {
+impl<S: Ord, const PF: ProtocolFlags, const KF: KeyFlags> Ord for Secondary<S, PF, KF> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.s.cmp(&other.s)
     }
 }
-impl<S: Hash, const IF: InjectionFlags, const KF: KeyFlags> Hash for Secondary<S, IF, KF> {
+impl<S: Hash, const PF: ProtocolFlags, const KF: KeyFlags> Hash for Secondary<S, PF, KF> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        hash_injector::signal_inject_hash::<H, IF>(state, self.hash);
+        hash_injector::signal_inject_hash::<H, PF>(state, self.hash);
     }
 }
-impl<S, const IF: InjectionFlags, const KF: KeyFlags> Deref for Secondary<S, IF, KF> {
+impl<S, const PF: ProtocolFlags, const KF: KeyFlags> Deref for Secondary<S, PF, KF> {
     type Target = S;
 
     fn deref(&self) -> &Self::Target {
         &self.s
     }
 }
-impl<S, const IF: InjectionFlags, const KF: KeyFlags> DerefMut for Secondary<S, IF, KF> {
+impl<S, const PF: ProtocolFlags, const KF: KeyFlags> DerefMut for Secondary<S, PF, KF> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.s
     }
@@ -191,27 +189,27 @@ impl<S, const IF: InjectionFlags, const KF: KeyFlags> DerefMut for Secondary<S, 
 /// trait for borrowing as comparable by `idx` part, too.
 #[derive(Clone, Eq, Copy, Debug)]
 #[non_exhaustive]
-pub struct Duality<P, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags> {
-    pub pk: Primary<P, IF, PKF>,
-    pub sk: Secondary<S, IF, SKF>,
+pub struct Duality<P, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags> {
+    pub pk: Primary<P, PF, PKF>,
+    pub sk: Secondary<S, PF, SKF>,
 }
-impl<P, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags>
-    Duality<P, S, IF, PKF, SKF>
+impl<P, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags>
+    Duality<P, S, PF, PKF, SKF>
 {
-    pub fn new(pk: Primary<P, IF, PKF>, sk: Secondary<S, IF, SKF>) -> Self {
+    pub fn new(pk: Primary<P, PF, PKF>, sk: Secondary<S, PF, SKF>) -> Self {
         Self { pk, sk }
     }
 }
 
-impl<P, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags> Hash
-    for Duality<P, S, IF, PKF, SKF>
+impl<P, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags> Hash
+    for Duality<P, S, PF, PKF, SKF>
 {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        hash_injector::signal_inject_hash::<H, IF>(state, self.sk.hash);
+        hash_injector::signal_inject_hash::<H, PF>(state, self.sk.hash);
     }
 }
-impl<P: PartialEq, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags> PartialEq
-    for Duality<P, S, IF, PKF, SKF>
+impl<P: PartialEq, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags> PartialEq
+    for Duality<P, S, PF, PKF, SKF>
 {
     fn eq(&self, other: &Self) -> bool {
         self.pk == other.pk
@@ -221,17 +219,17 @@ impl<P: PartialEq, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: 
     }
 }
 
-impl<P, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags>
-    Borrow<Primary<P, IF, PKF>> for Duality<P, S, IF, PKF, SKF>
+impl<P, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags>
+    Borrow<Primary<P, PF, PKF>> for Duality<P, S, PF, PKF, SKF>
 {
-    fn borrow(&self) -> &Primary<P, IF, PKF> {
+    fn borrow(&self) -> &Primary<P, PF, PKF> {
         &self.pk
     }
 }
-impl<P, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags>
-    Borrow<Secondary<S, IF, SKF>> for Duality<P, S, IF, PKF, SKF>
+impl<P, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags>
+    Borrow<Secondary<S, PF, SKF>> for Duality<P, S, PF, PKF, SKF>
 {
-    fn borrow(&self) -> &Secondary<S, IF, SKF> {
+    fn borrow(&self) -> &Secondary<S, PF, SKF> {
         &self.sk
     }
 }
@@ -249,8 +247,8 @@ impl<P> PrimaryWrap<P> {
         Self { p }
     }
 }
-impl<'a, P, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags>
-    Borrow<PrimaryWrap<P>> for Duality<P, S, IF, PKF, SKF>
+impl<'a, P, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags>
+    Borrow<PrimaryWrap<P>> for Duality<P, S, PF, PKF, SKF>
 {
     fn borrow(&self) -> &PrimaryWrap<P> {
         unsafe { mem::transmute(&self.pk.p) }
@@ -270,50 +268,50 @@ impl<S> SecondaryWrap<S> {
         Self { s }
     }
 }
-impl<'a, P, S, const IF: InjectionFlags, const PKF: KeyFlags, const SKF: KeyFlags>
-    Borrow<SecondaryWrap<P>> for Duality<P, S, IF, PKF, SKF>
+impl<'a, P, S, const PF: ProtocolFlags, const PKF: KeyFlags, const SKF: KeyFlags>
+    Borrow<SecondaryWrap<P>> for Duality<P, S, PF, PKF, SKF>
 {
     fn borrow(&self) -> &SecondaryWrap<P> {
         unsafe { mem::transmute(&self.sk.s) }
     }
 }
 
-/*pub trait _Suggested<const IF: InjectionFlags>: Sized {
+/*pub trait _Suggested<const PF: ProtocolFlags>: Sized {
     const PRIMARY_FLAGS: KeyFlags;
     const SECONDARY_FLAGS: KeyFlags;
-    //type Prim = Primary<T, IF, {Self::PRIMARY_FLAGS} >;
-    // type Prim = Primary<Self, IF, {Self::PRIMARY_FLAGS} > where [(); {Self::PRIMARY_FLAGS::pretend_usize()} as usize]:;
-    // type Seco = Secondary<Self, IF, {Self::SECONDARY_FLAGS} > where [(); {Self::SECONDARY_FLAGS} as usize]:;
+    //type Prim = Primary<T, PF, {Self::PRIMARY_FLAGS} >;
+    // type Prim = Primary<Self, PF, {Self::PRIMARY_FLAGS} > where [(); {Self::PRIMARY_FLAGS::pretend_usize()} as usize]:;
+    // type Seco = Secondary<Self, PF, {Self::SECONDARY_FLAGS} > where [(); {Self::SECONDARY_FLAGS} as usize]:;
 }*/
 
-pub trait Suggested<const IF: InjectionFlags>: Sized {
+pub trait Suggested<const PF: ProtocolFlags>: Sized {
     type Prim;
     type Sec;
 }
-//const IF_SUBMIT_FIRST: InjectionFlags = new_flags_submit_first();
-impl<const IF: InjectionFlags> Suggested<IF> for u8 {
-    type Prim = Primary<u8, { IF }, { new_flags_eq_excludes_hash() }>;
-    type Sec = Secondary<u8, { IF }, { new_flags_eq_excludes_hash() }>;
+//const PF_SUBMIT_FIRST: ProtocolFlags = new_flags_submit_first();
+impl<const PF: ProtocolFlags> Suggested<PF> for u8 {
+    type Prim = Primary<u8, { PF }, { new_flags_eq_excludes_hash() }>;
+    type Sec = Secondary<u8, { PF }, { new_flags_eq_excludes_hash() }>;
 }
 
-pub type U8Primary<const IF: InjectionFlags> = <u8 as Suggested<IF>>::Prim;
+pub type U8Primary<const PF: ProtocolFlags> = <u8 as Suggested<PF>>::Prim;
 
 // -||-  U8Secondary
 //----
 /* Less ergonomic alternative:
-pub trait PrimaryTr2<const IF: InjectionFlags>: Sized {
+pub trait PrimaryTr2<const PF: ProtocolFlags>: Sized {
     type Prim;
     type Sec;
-    const RECOMMENDED_INJECTION_FLAGS: InjectionFlags;
+    const RECOMMENDED_INJECTION_FLAGS: ProtocolFlags;
 }
-pub struct __Suggested<P, const IF: InjectionFlags>(core::marker::PhantomData<P>);
-impl<const IF: InjectionFlags> PrimaryTr2<IF> for __Suggested<u8, IF> {
-    type Prim = Primary<u8, { IF }, { new_flags_eq_excludes_hash() }>;
-    type Sec = Secondary<u8, { IF }, { new_flags_eq_excludes_hash() }>;
-    const RECOMMENDED_INJECTION_FLAGS: InjectionFlags = IF_SUBMIT_FIRST;
+pub struct __Suggested<P, const PF: ProtocolFlags>(core::marker::PhantomData<P>);
+impl<const PF: ProtocolFlags> PrimaryTr2<PF> for __Suggested<u8, PF> {
+    type Prim = Primary<u8, { PF }, { new_flags_eq_excludes_hash() }>;
+    type Sec = Secondary<u8, { PF }, { new_flags_eq_excludes_hash() }>;
+    const RECOMMENDED_INJECTION_FLAGS: ProtocolFlags = PF_SUBMIT_FIRST;
 }
 
-pub type U8Primary2<const IF: InjectionFlags> = <__Suggested<u8, IF> as PrimaryTr2<IF>>::Prim;
+pub type U8Primary2<const PF: ProtocolFlags> = <__Suggested<u8, PF> as PrimaryTr2<PF>>::Prim;
 */
 
 #[cfg(test)]
