@@ -1,11 +1,11 @@
 #![no_std]
 #![feature(hasher_prefixfree_extras)]
-#![cfg_attr(feature = "adt-const-params", feature(adt_const_params))]
+#![cfg_attr(feature = "flags-type", feature(adt_const_params))]
 
 use core::borrow::Borrow;
 use core::cmp::Ordering;
 use core::hash::{Hash, Hasher};
-#[cfg(feature = "adt-const-params")]
+#[cfg(feature = "flags-type")]
 use core::marker::ConstParamTy;
 use core::mem;
 use core::ops::{Deref, DerefMut};
@@ -22,10 +22,10 @@ use hash_injector::ProtocolFlags;
 pub type KeyFlags = KeyFlagsImpl;
 
 // If we ever have more than one flag, then change this into e.g. u8.
-#[cfg(not(feature = "adt-const-params"))]
+#[cfg(not(feature = "flags-type"))]
 type KeyFlagsImpl = bool;
 
-#[cfg(feature = "adt-const-params")]
+#[cfg(feature = "flags-type")]
 /// Type for const generic parameter `KF`.
 #[derive(ConstParamTy, Clone, Copy, PartialEq, Eq)]
 pub struct KeyFlagsImpl {
@@ -33,30 +33,30 @@ pub struct KeyFlagsImpl {
 }
 
 pub const fn new_flags_eq_includes_hash() -> KeyFlags {
-    #[cfg(not(feature = "adt-const-params"))]
+    #[cfg(not(feature = "flags-type"))]
     {
         true
     }
-    #[cfg(feature = "adt-const-params")]
+    #[cfg(feature = "flags-type")]
     KeyFlags {
         eq_includes_hash: true,
     }
 }
 pub const fn new_flags_eq_excludes_hash() -> KeyFlags {
-    #[cfg(not(feature = "adt-const-params"))]
+    #[cfg(not(feature = "flags-type"))]
     {
         false
     }
-    #[cfg(feature = "adt-const-params")]
+    #[cfg(feature = "flags-type")]
     KeyFlags {
         eq_includes_hash: false,
     }
 }
 
 const fn eq_includes_hash(flags: KeyFlags) -> bool {
-    #[cfg(not(feature = "adt-const-params"))]
+    #[cfg(not(feature = "flags-type"))]
     return flags;
-    #[cfg(feature = "adt-const-params")]
+    #[cfg(feature = "flags-type")]
     return flags.eq_includes_hash;
 }
 
@@ -294,7 +294,7 @@ impl<const PF: ProtocolFlags> Suggested<PF> for u8 {
     type Sec = Secondary<u8, { PF }, { new_flags_eq_excludes_hash() }>;
 }
 
-pub type U8Primary<const PF: ProtocolFlags> = <u8 as Suggested<PF>>::Prim;
+//pub type U8Primary<const PF: ProtocolFlags> = <u8 as Suggested<PF>>::Prim;
 
 // -||-  U8Secondary
 //----
