@@ -32,7 +32,7 @@ pub struct KeyFlagsImpl {
     eq_includes_hash: bool,
 }
 
-pub const fn new_flags_eq_includes_hash() -> KeyFlags {
+pub const fn flags_eq_includes_hash() -> KeyFlags {
     #[cfg(not(feature = "flags-type"))]
     {
         true
@@ -42,7 +42,7 @@ pub const fn new_flags_eq_includes_hash() -> KeyFlags {
         eq_includes_hash: true,
     }
 }
-pub const fn new_flags_eq_excludes_hash() -> KeyFlags {
+pub const fn flags_eq_excludes_hash() -> KeyFlags {
     #[cfg(not(feature = "flags-type"))]
     {
         false
@@ -290,8 +290,8 @@ pub trait Suggested<const PF: ProtocolFlags>: Sized {
 }
 //const PF_SUBMIT_FIRST: ProtocolFlags = new_flags_submit_first();
 impl<const PF: ProtocolFlags> Suggested<PF> for u8 {
-    type Prim = Primary<u8, { PF }, { new_flags_eq_excludes_hash() }>;
-    type Sec = Secondary<u8, { PF }, { new_flags_eq_excludes_hash() }>;
+    type Prim = Primary<u8, { PF }, { flags_eq_excludes_hash() }>;
+    type Sec = Secondary<u8, { PF }, { flags_eq_excludes_hash() }>;
 }
 
 //pub type U8Primary<const PF: ProtocolFlags> = <u8 as Suggested<PF>>::Prim;
